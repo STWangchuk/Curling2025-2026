@@ -15,6 +15,30 @@ library(dplyr)
 ```
 
 
+Cleaning out the 0 and the 4950s:
+
+```{r}
+ShotYet <- function(Xvalue, Yvalue) {
+  return(!(Xvalue == 0 & Yvalue == 0)) 
+}
+
+for (i in 1:12) {
+  Stones[[paste0("Stone_", i, "_Shot")]] <-
+    ShotYet(Stones[[paste0("stone_", i, "_x")]],
+                      Stones[[paste0("stone_", i, "_y")]])
+}
+
+OutOfPlay <- function(Xvalue, Yvalue) {
+  return(Xvalue == 4095 | Yvalue == 4095) 
+}
+
+for (i in 1:12) {
+  Stones[[paste0("Stone_", i, "_OutOfPlay")]] <-
+    OutOfPlay(Stones[[paste0("stone_", i, "_x")]],
+                      Stones[[paste0("stone_", i, "_y")]])
+}
+```
+
 
 
 ```{r}
@@ -40,6 +64,14 @@ for (i in 1:12) {
                       Stones[[paste0("stone_", i, "_y")]])
 }
 
+Behind <- function(Yvalue) {
+  return(Yvalue < 800) 
+}
+
+for (i in 1:12) {
+  Stones[[paste0("Stone_", i, "_Behind")]] <-
+    Behind(Stones[[paste0("stone_", i, "_y")]])
+}
 
 ```
 
