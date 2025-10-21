@@ -1,0 +1,48 @@
+---
+title: "Main"
+output: html_document
+---
+
+```{r}
+Competition <- read.csv("clean_data/Competition.csv")
+Competitors <- read.csv("clean_data/Competitors.csv")
+Ends <- read.csv("clean_data/Ends.csv")
+Games <- read.csv("clean_data/Games.csv")
+Stones <- read.csv("clean_data/Stones.csv")
+Teams <- read.csv("clean_data/Teams.csv")
+
+library(dplyr)
+```
+
+
+
+
+```{r}
+Stones <- Stones %>%
+  left_join(Games %>% 
+              select(CompetitionID, SessionID, GameID, TeamID1, TeamID2, Winner),
+            by = c("CompetitionID", "SessionID", "GameID")) %>%
+  mutate(Won = case_when(
+    (TeamID == TeamID1 & Winner == 0) ~ 1,
+    (TeamID == TeamID2 & Winner == 1) ~ 1,  
+    TRUE ~ 0                               
+  ))
+
+# Euclidean Distance Function into this
+EuclideanDistance <- function(Xvalue, Yvalue) {
+  final <- sqrt((Xvalue - 750)^2 + (Yvalue - 800)^2)
+  return(final) 
+}
+
+for (i in 1:12) {
+  Stones[[paste0("Stone_", i, "_Distance")]] <-
+    EuclideanDistance(Stones[[paste0("stone_", i, "_x")]],
+                      Stones[[paste0("stone_", i, "_y")]])
+}
+
+
+```
+
+
+
+
