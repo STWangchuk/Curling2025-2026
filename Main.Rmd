@@ -16,6 +16,23 @@ library(dplyr)
 library(randomForest)
 ```
 
+```{r}
+Stones <- Stones %>%
+  mutate(ShotID = recode(ShotID,
+                    `7` = 1,
+                    `8` = 2,
+                    `9` = 3,
+                    `16` = 4,
+                    `17` = 5,
+                    `18` = 6,
+                    `19` = 7,
+                    `20` = 8,
+                    `21` = 9,
+                    `22` = 10))
+
+Stones
+```
+
 Cleaning out the 0 and the 4950s to have ShotYet and OutOfPlay indicators
 
 ```{r}
@@ -171,7 +188,7 @@ model_data <- Stones %>%
     Team1_Closest, Team2_Closest,
     Team1_Guards, Team2_Guards,
     Current_Score_Team1,
-    Stones_On_Ice, Team1_Hammer,
+    ShotID, Team1_Hammer,
     Result_Team1
   ) %>%
   na.omit() %>%
@@ -186,7 +203,7 @@ Let's try the most basic logistic regression model on this (I have no idea how t
 model <- glm(
   Team1_Won_End ~ Team1_In_House + Team2_In_House + 
     Team1_Closest + Team2_Closest + Team1_Guards + Team2_Guards + 
-    Current_Score_Team1 + Stones_On_Ice + Team1_Hammer,
+    Current_Score_Team1 + ShotID + Team1_Hammer,
   data = model_data,
   family = binomial
 )
@@ -215,7 +232,7 @@ test <- model_data[-train_idx, ]
 rf <- randomForest(
   Team1_Won_End ~ Team1_In_House + Team2_In_House + 
     Team1_Closest + Team2_Closest + Team1_Guards + Team2_Guards + 
-    Current_Score_Team1 + Stones_On_Ice + Team1_Hammer,
+    Current_Score_Team1 + ShotID + Team1_Hammer,
   data = train,
   ntree = 200,
   importance = TRUE
@@ -228,11 +245,10 @@ sum(test$Team1_Won_End == ifelse(test$pred_prob > 0.5, "TRUE", "FALSE")) / nrow(
 This one is more of a points prediction model. Accuracy is determined by the sign of the predicted score
 
 ```{r}
-
 rf_score <- randomForest(
   Result_Team1 ~ Team1_In_House + Team2_In_House + 
     Team1_Closest + Team2_Closest + Team1_Guards + Team2_Guards + 
-    Current_Score_Team1 + Stones_On_Ice + Team1_Hammer,
+    Current_Score_Team1 + ShotID + Team1_Hammer,
   data = train,
   ntree = 200,
   importance = TRUE
@@ -242,3 +258,105 @@ test$pred_score <- predict(rf_score, test)
 test$pred_class <- ifelse(test$pred_score > 0, "TRUE", "FALSE")
 hist(test$pred_score - test$Result_Team1, breaks = 30, main = paste0("Prediction Errors. Accuracy: ", sum(test$Team1_Won_End == test$pred_class) / nrow(test)), xlab = "Predicted - Actual Score")
 ```
+Thoughts:
+
+Can we score guards?
+Can we get an idea of where "guard" shots land that leads them to be a high-quality guard?
+Is the quality of guard simply based on position? Can we make the assumption of this?
+Should we just rank the euclidean distance of each stone? 
+
+```{r}
+Exp = Stones %>% filter(Task == 2, Points == 4)
+```
+```{r}
+for(i in 1:nrow(Exp)){
+  if(Exp$Team1_Hammer[i]){
+    if(Exp$ShotID[i] == 1){
+      Exp$Current_x[i] <- Exp$stone_8_x[i]
+      Exp$Current_y[i] <- Exp$stone_8_y[i]
+    }
+    if(Exp$ShotID[i] == 2){
+      Exp$Current_x[i] <- Exp$stone_2_x[i]
+      Exp$Current_y[i] <- Exp$stone_2_y[i]
+    }
+    if(Exp$ShotID[i] == 3){
+      Exp$Current_x[i] <- Exp$stone_9_x[i]
+      Exp$Current_y[i] <- Exp$stone_9_y[i]
+    }
+    if(Exp$ShotID[i] == 4){
+      Exp$Current_x[i] <- Exp$stone_3_x[i]
+      Exp$Current_y[i] <- Exp$stone_3_y[i]
+    }
+    if(Exp$ShotID[i] == 5){
+      Exp$Current_x[i] <- Exp$stone_10_x[i]
+      Exp$Current_y[i] <- Exp$stone_10_y[i]
+    }
+    if(Exp$ShotID[i] == 6){
+      Exp$Current_x[i] <- Exp$stone_4_x[i]
+      Exp$Current_y[i] <- Exp$stone_4_y[i]
+    }
+    if(Exp$ShotID[i] == 7){
+      Exp$Current_x[i] <- Exp$stone_11_x[i]
+      Exp$Current_y[i] <- Exp$stone_11_y[i]
+    }
+    if(Exp$ShotID[i] == 8){
+      Exp$Current_x[i] <- Exp$stone_5_x[i]
+      Exp$Current_y[i] <- Exp$stone_5_y[i]
+    }
+    if(Exp$ShotID[i] == 9){
+      Exp$Current_x[i] <- Exp$stone_12_x[i]
+      Exp$Current_y[i] <- Exp$stone_12_y[i]
+    }
+    if(Exp$ShotID[i] == 10){
+      Exp$Current_x[i] <- Exp$stone_6_x[i]
+      Exp$Current_y[i] <- Exp$stone_6_y[i]
+    }
+  }
+  else{
+    if(Exp$ShotID[i] == 1){
+      Exp$Current_x[i] <- Exp$stone_2_x[i]
+      Exp$Current_y[i] <- Exp$stone_2_y[i]
+    }
+    if(Exp$ShotID[i] == 2){
+      Exp$Current_x[i] <- Exp$stone_8_x[i]
+      Exp$Current_y[i] <- Exp$stone_8_y[i]
+    }
+    if(Exp$ShotID[i] == 3){
+      Exp$Current_x[i] <- Exp$stone_3_x[i]
+      Exp$Current_y[i] <- Exp$stone_3_y[i]
+    }
+    if(Exp$ShotID[i] == 4){
+      Exp$Current_x[i] <- Exp$stone_9_x[i]
+      Exp$Current_y[i] <- Exp$stone_9_y[i]
+    }
+    if(Exp$ShotID[i] == 5){
+      Exp$Current_x[i] <- Exp$stone_4_x[i]
+      Exp$Current_y[i] <- Exp$stone_4_y[i]
+    }
+    if(Exp$ShotID[i] == 6){
+      Exp$Current_x[i] <- Exp$stone_10_x[i]
+      Exp$Current_y[i] <- Exp$stone_10_y[i]
+    }
+    if(Exp$ShotID[i] == 7){
+      Exp$Current_x[i] <- Exp$stone_5_x[i]
+      Exp$Current_y[i] <- Exp$stone_5_y[i]
+    }
+    if(Exp$ShotID[i] == 8){
+      Exp$Current_x[i] <- Exp$stone_11_x[i]
+      Exp$Current_y[i] <- Exp$stone_11_y[i]
+    }
+    if(Exp$ShotID[i] == 9){
+      Exp$Current_x[i] <- Exp$stone_6_x[i]
+      Exp$Current_y[i] <- Exp$stone_6_y[i]
+    }
+    if(Exp$ShotID[i] == 10){
+      Exp$Current_x[i] <- Exp$stone_12_x[i]
+      Exp$Current_y[i] <- Exp$stone_12_y[i]
+    }
+  }
+}
+```
+```{r}
+plot(Exp$Current_x, Exp$Current_y)
+```
+
