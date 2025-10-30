@@ -29,8 +29,6 @@ Stones <- Stones %>%
                     `20` = 8,
                     `21` = 9,
                     `22` = 10))
-
-Stones
 ```
 
 Cleaning out the 0 and the 4950s to have ShotYet and OutOfPlay indicators
@@ -172,6 +170,39 @@ Stones <- Stones %>%
       TRUE ~ NA
     )
   ) %>%
+  ungroup() %>%
+  group_by(CompetitionID, SessionID, GameID, EndID, TeamID) %>%
+  mutate(
+    AveragePoints = mean(Points, na.rm = TRUE)
+  ) %>%
+  ungroup()
+```
+
+
+```{r}
+Stones <- Stones %>%
+  group_by(CompetitionID, SessionID, GameID, EndID) %>%
+  mutate(
+    AveragePointsDifference = mean(Points[TeamID == unique(TeamID)[1]], na.rm = TRUE) - 
+                             mean(Points[TeamID == unique(TeamID)[2]], na.rm = TRUE),
+    
+    # Create AverageInHouseDistance
+    AverageInHouseDistance = {
+      # Get all Stone_X_Distance columns
+      stone_distances <- c(Stone_1_Distance, Stone_2_Distance, Stone_3_Distance, 
+                          Stone_4_Distance, Stone_5_Distance, Stone_6_Distance,
+                          Stone_7_Distance, Stone_8_Distance, Stone_9_Distance,
+                          Stone_10_Distance, Stone_11_Distance, Stone_12_Distance)
+
+      in_house_distances <- stone_distances[stone_distances < 600 & !is.na(stone_distances)]
+
+      if (length(in_house_distances) > 0) {
+        mean(in_house_distances, na.rm = TRUE)
+      } else {
+        NA_real_
+      }
+    }
+  ) %>%
   ungroup()
 
 ```
@@ -189,7 +220,8 @@ model_data <- Stones %>%
     Team1_Guards, Team2_Guards,
     Current_Score_Team1,
     ShotID, Team1_Hammer,
-    Result_Team1
+    Result_Team1,
+    AverageInHouseDistance
   ) %>%
   na.omit() %>%
   mutate(
@@ -203,7 +235,7 @@ Let's try the most basic logistic regression model on this (I have no idea how t
 model <- glm(
   Team1_Won_End ~ Team1_In_House + Team2_In_House + 
     Team1_Closest + Team2_Closest + Team1_Guards + Team2_Guards + 
-    Current_Score_Team1 + ShotID + Team1_Hammer,
+    Current_Score_Team1 + ShotID + Team1_Hammer * AverageInHouseDistance,
   data = model_data,
   family = binomial
 )
@@ -232,12 +264,12 @@ test <- model_data[-train_idx, ]
 rf <- randomForest(
   Team1_Won_End ~ Team1_In_House + Team2_In_House + 
     Team1_Closest + Team2_Closest + Team1_Guards + Team2_Guards + 
-    Current_Score_Team1 + ShotID + Team1_Hammer,
+    Current_Score_Team1 + ShotID + Team1_Hammer + AverageInHouseDistance,
   data = train,
   ntree = 200,
   importance = TRUE
 )
-
+test <- filter(test, ShotID > 2)
 test$pred_prob <- predict(rf, test, type = "prob")[, "TRUE"]
 sum(test$Team1_Won_End == ifelse(test$pred_prob > 0.5, "TRUE", "FALSE")) / nrow(test)
 ```
@@ -248,115 +280,76 @@ This one is more of a points prediction model. Accuracy is determined by the sig
 rf_score <- randomForest(
   Result_Team1 ~ Team1_In_House + Team2_In_House + 
     Team1_Closest + Team2_Closest + Team1_Guards + Team2_Guards + 
-    Current_Score_Team1 + ShotID + Team1_Hammer,
+    Current_Score_Team1 + ShotID + Team1_Hammer + AverageInHouseDistance,
   data = train,
   ntree = 200,
   importance = TRUE
 )
-
+test <- filter(test, ShotID < 6)
 test$pred_score <- predict(rf_score, test)
-test$pred_class <- ifelse(test$pred_score > 0, "TRUE", "FALSE")
-hist(test$pred_score - test$Result_Team1, breaks = 30, main = paste0("Prediction Errors. Accuracy: ", sum(test$Team1_Won_End == test$pred_class) / nrow(test)), xlab = "Predicted - Actual Score")
+test$pred_score <- round(test$pred_score)
+hist(test$pred_score - test$Result_Team1, breaks = 30, main = paste0("Prediction Errors. Accuracy: ", sum(test$pred_score == test$Result_Team1) / nrow(test)), xlab = "Predicted - Actual Score")
 ```
-Thoughts:
 
-Can we score guards?
-Can we get an idea of where "guard" shots land that leads them to be a high-quality guard?
-Is the quality of guard simply based on position? Can we make the assumption of this?
-Should we just rank the euclidean distance of each stone? 
+Scoring potential guards => Dead end
 
 ```{r}
 Exp = Stones %>% filter(Task == 2, Points == 4)
 ```
+
+
 ```{r}
-for(i in 1:nrow(Exp)){
-  if(Exp$Team1_Hammer[i]){
-    if(Exp$ShotID[i] == 1){
-      Exp$Current_x[i] <- Exp$stone_8_x[i]
-      Exp$Current_y[i] <- Exp$stone_8_y[i]
-    }
-    if(Exp$ShotID[i] == 2){
-      Exp$Current_x[i] <- Exp$stone_2_x[i]
-      Exp$Current_y[i] <- Exp$stone_2_y[i]
-    }
-    if(Exp$ShotID[i] == 3){
-      Exp$Current_x[i] <- Exp$stone_9_x[i]
-      Exp$Current_y[i] <- Exp$stone_9_y[i]
-    }
-    if(Exp$ShotID[i] == 4){
-      Exp$Current_x[i] <- Exp$stone_3_x[i]
-      Exp$Current_y[i] <- Exp$stone_3_y[i]
-    }
-    if(Exp$ShotID[i] == 5){
-      Exp$Current_x[i] <- Exp$stone_10_x[i]
-      Exp$Current_y[i] <- Exp$stone_10_y[i]
-    }
-    if(Exp$ShotID[i] == 6){
-      Exp$Current_x[i] <- Exp$stone_4_x[i]
-      Exp$Current_y[i] <- Exp$stone_4_y[i]
-    }
-    if(Exp$ShotID[i] == 7){
-      Exp$Current_x[i] <- Exp$stone_11_x[i]
-      Exp$Current_y[i] <- Exp$stone_11_y[i]
-    }
-    if(Exp$ShotID[i] == 8){
-      Exp$Current_x[i] <- Exp$stone_5_x[i]
-      Exp$Current_y[i] <- Exp$stone_5_y[i]
-    }
-    if(Exp$ShotID[i] == 9){
-      Exp$Current_x[i] <- Exp$stone_12_x[i]
-      Exp$Current_y[i] <- Exp$stone_12_y[i]
-    }
-    if(Exp$ShotID[i] == 10){
-      Exp$Current_x[i] <- Exp$stone_6_x[i]
-      Exp$Current_y[i] <- Exp$stone_6_y[i]
-    }
-  }
-  else{
-    if(Exp$ShotID[i] == 1){
-      Exp$Current_x[i] <- Exp$stone_2_x[i]
-      Exp$Current_y[i] <- Exp$stone_2_y[i]
-    }
-    if(Exp$ShotID[i] == 2){
-      Exp$Current_x[i] <- Exp$stone_8_x[i]
-      Exp$Current_y[i] <- Exp$stone_8_y[i]
-    }
-    if(Exp$ShotID[i] == 3){
-      Exp$Current_x[i] <- Exp$stone_3_x[i]
-      Exp$Current_y[i] <- Exp$stone_3_y[i]
-    }
-    if(Exp$ShotID[i] == 4){
-      Exp$Current_x[i] <- Exp$stone_9_x[i]
-      Exp$Current_y[i] <- Exp$stone_9_y[i]
-    }
-    if(Exp$ShotID[i] == 5){
-      Exp$Current_x[i] <- Exp$stone_4_x[i]
-      Exp$Current_y[i] <- Exp$stone_4_y[i]
-    }
-    if(Exp$ShotID[i] == 6){
-      Exp$Current_x[i] <- Exp$stone_10_x[i]
-      Exp$Current_y[i] <- Exp$stone_10_y[i]
-    }
-    if(Exp$ShotID[i] == 7){
-      Exp$Current_x[i] <- Exp$stone_5_x[i]
-      Exp$Current_y[i] <- Exp$stone_5_y[i]
-    }
-    if(Exp$ShotID[i] == 8){
-      Exp$Current_x[i] <- Exp$stone_11_x[i]
-      Exp$Current_y[i] <- Exp$stone_11_y[i]
-    }
-    if(Exp$ShotID[i] == 9){
-      Exp$Current_x[i] <- Exp$stone_6_x[i]
-      Exp$Current_y[i] <- Exp$stone_6_y[i]
-    }
-    if(Exp$ShotID[i] == 10){
-      Exp$Current_x[i] <- Exp$stone_12_x[i]
-      Exp$Current_y[i] <- Exp$stone_12_y[i]
-    }
-  }
-}
+# Define mappings
+map_hammer <- c(
+  "1" = "stone_8",
+  "2" = "stone_2",
+  "3" = "stone_9",
+  "4" = "stone_3",
+  "5" = "stone_10",
+  "6" = "stone_4",
+  "7" = "stone_11",
+  "8" = "stone_5",
+  "9" = "stone_12",
+  "10" = "stone_6"
+)
+
+map_no_hammer <- c(
+  "1" = "stone_2",
+  "2" = "stone_8",
+  "3" = "stone_3",
+  "4" = "stone_9",
+  "5" = "stone_4",
+  "6" = "stone_10",
+  "7" = "stone_5",
+  "8" = "stone_11",
+  "9" = "stone_6",
+  "10" = "stone_12"
+)
+
+# Select appropriate mapping for each row
+stone_map <- ifelse(
+  Exp$Team1_Hammer,
+  map_hammer[as.character(Exp$ShotID)],
+  map_no_hammer[as.character(Exp$ShotID)]
+)
+
+# Build column names for x and y
+x_cols <- paste0(stone_map, "_x")
+y_cols <- paste0(stone_map, "_y")
+
+# Use mapply to pull the right columns row-by-row
+Exp$Current_x <- mapply(function(row, col) Exp[row, col], seq_len(nrow(Exp)), x_cols)
+Exp$Current_y <- mapply(function(row, col) Exp[row, col], seq_len(nrow(Exp)), y_cols)
+
 ```
+
+
 ```{r}
 plot(Exp$Current_x, Exp$Current_y)
+```
+
+
+```{r}
+
 ```
 
