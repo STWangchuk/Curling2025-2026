@@ -219,4 +219,85 @@ model_data <- model_data %>%
   mutate(across(where(is.numeric), ~ ifelse(is.infinite(.), 0, .))) %>%
   mutate(across(where(is.numeric), ~ ifelse(is.nan(.), 0, .)))
 
+Voronoi = Stones[2,]
+
+if(Voronoi$Team1_Hammer == TRUE){
+  stones_team1_x <- c(Voronoi$stone_7_x, Voronoi$stone_8_x, Voronoi$stone_9_x, Voronoi$stone_10_x, Voronoi$stone_11_x, Voronoi$stone_12_x)
+  stones_team1_y <- c(Voronoi$stone_7_y, Voronoi$stone_8_y, Voronoi$stone_9_y, Voronoi$stone_10_y, Voronoi$stone_11_y, Voronoi$stone_12_y)
+  stones_team2_x <- c(Voronoi$stone_1_x, Voronoi$stone_2_x, Voronoi$stone_3_x, Voronoi$stone_4_x, Voronoi$stone_5_x, Voronoi$stone_6_x)
+  stones_team2_y <- c(Voronoi$stone_1_y, Voronoi$stone_2_y, Voronoi$stone_3_y, Voronoi$stone_4_y, Voronoi$stone_5_y, Voronoi$stone_6_y)
+} else {
+  Voronoi_team1_x <- c(Voronoi$stone_1_x, Voronoi$stone_2_x, Voronoi$stone_3_x, Voronoi$stone_4_x, Voronoi$stone_5_x, Voronoi$stone_6_x)
+  Voronoi_team1_y <- c(Voronoi$stone_1_y, Voronoi$stone_2_y, Voronoi$stone_3_y, Voronoi$stone_4_y, Voronoi$stone_5_y, Voronoi$stone_6_y)
+  Voronoi_team2_x <- c(Voronoi$stone_7_x, Voronoi$stone_8_x, Voronoi$stone_9_x, Voronoi$stone_10_x, Voronoi$stone_11_x, Voronoi$stone_12_x)
+  Voronoi_team2_y <- c(Voronoi$stone_7_y, Voronoi$stone_8_y, Voronoi$stone_9_y, Voronoi$stone_10_y, Voronoi$stone_11_y, Voronoi$stone_12_y)
+}
+
+Voronoi_team1 <- na.omit(data.frame(x = Voronoi_team1_x, y = Voronoi_team1_y, team = 1))
+Voronoi_team2 <- na.omit(data.frame(x = Voronoi_team2_x, y = Voronoi_team2_y, team = 2))
+
+voronoi_data <- rbind(Voronoi_team1, Voronoi_team2)
+
+v <- deldir(voronoi_data$x, voronoi_data$y, rw = c(0, 1500, 0, 3000))
+tiles <- tile.list(v)
+polys <- lapply(1:length(tiles), function(i) {
+  data.frame(x = tiles[[i]]$x, y = tiles[[i]]$y, team = voronoi_data$team[i])
+})
+
+poly_df <- bind_rows(
+  lapply(seq_along(polys), function(i) {
+    polys[[i]] %>%
+      mutate(poly_id = i)
+  })
+)
+team_colors <- c("red", "blue")
+voronoi_plot <- ggplot() +
+  geom_polygon(
+    data = poly_df,
+    aes(x = x, y = y, group = poly_id, fill = factor(team)),
+    alpha = 0.3,
+    color = NA
+  ) +
+  geom_point(
+    data = voronoi_data,
+    aes(x = x, y = y, color = factor(team)),
+    size = 2
+  ) +
+  annotate(
+    "path",
+    x = 750 + 200 * cos(seq(0, 2*pi, length.out = 300)),
+    y = 800 + 200 * sin(seq(0, 2*pi, length.out = 300)),
+    linewidth = 1
+  ) +
+  annotate(
+    "path",
+    x = 750 + 400 * cos(seq(0, 2*pi, length.out = 300)),
+    y = 800 + 400 * sin(seq(0, 2*pi, length.out = 300)),
+    linewidth = 1
+  ) +
+  annotate(
+    "path",
+    x = 750 + 600 * cos(seq(0, 2*pi, length.out = 300)),
+    y = 800 + 600 * sin(seq(0, 2*pi, length.out = 300)),
+    linewidth = 1
+  ) +
+  geom_point(
+    aes(x = 750, y = 800),
+    shape = 4,
+    color = "darkgreen",
+    size = 4,
+    stroke = 1.2
+  ) +
+  scale_fill_manual(values = team_colors) +
+  scale_color_manual(values = team_colors) +
+  coord_fixed(xlim = c(0, 1500), ylim = c(0, 3000)) +
+  labs(
+    title = "Voronoi Diagram of Stones",
+    x = "X",
+    y = "Y",
+    fill = "Team",
+    color = "Team"
+  ) +
+  theme_minimal()
+
 saveRDS(model_data, "Data.rds")

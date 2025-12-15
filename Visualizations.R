@@ -101,3 +101,6 @@ importance_plot <- ggplot(top_10_importance, aes(x = Gain, y = Feature, fill = G
     axis.title = element_text(size = 12),
     legend.position = "none"
   )
+
+
+

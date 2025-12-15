@@ -21,10 +21,11 @@ knitr::opts_chunk$set(echo   =FALSE,
                       )
 ```
 
+```{=tex}
 \begin{center}
 Advised By: Professor Brian Macdonald
 \end{center}
-
+```
 <br>
 
 ## Abstract
