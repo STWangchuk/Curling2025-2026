@@ -81,7 +81,8 @@ final_features <- c(
   "xSteal_Prob", "Steal_Pressure", "Hammer_x_StealProb",
   "Team1_Using_PowerPlay", "Team2_Using_PowerPlay",
   "Team1_Cluster_Score", "Team2_Cluster_Score", "Cluster_Diff",
-  "Team1_Vertical_Spread", "Team2_Vertical_Spread"
+  "Team1_Vertical_Spread", "Team2_Vertical_Spread",
+  "Team1_Currently_Winning", "ShotID_x_Winning"
 )
 
 model_data <- model_data %>% filter(!is.na(Win), !is.na(Hammer))

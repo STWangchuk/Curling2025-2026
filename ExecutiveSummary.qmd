@@ -1,0 +1,47 @@
+---
+title: "Curling Win Probabilities"
+author: "Sonam Wangchuk and Jake Todd"
+format: pdf
+editor: visual
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo   =FALSE,    
+                      include=TRUE ,   
+                      message=FALSE,    
+                      warning=FALSE,   
+                      comment=NA,       
+                      fig.align="center",
+                      fig.height = 8,     
+                      fig.width = 12,     
+                      dpi = 300           
+                      )
+
+source("Main.R")
+```
+
+Mixed Doubles Curling is an offshoot of traditional curling, a sport where two teams take turns sliding stones down a sheet of ice towards a target. It has been called the "Wild West of Curling" due to its distinctive format and strategic complexity. The goal of this project a given game state, which includes information available to players and coaches such as how many stones have been thrown and the positions of such stones, to predict the probability of each team winning. These predictions will be created using data from the Beijing 2022 Olympic Winter Games, and the World Mixed Doubles Curling Championship from 2023-2025.
+
+In order to make these predictions, we will be using a model called XGBoost (Extreme Gradient Boosting). An XGBoost model works by initially making predictions with a weak model, like a basic decision tree, and then iterating with more trees that are designed to account for those errors. This model performed significantly better than other strategies that we tried such as logistic regression and a Convolutional Neural Network. This, in conjunction with targeted feature generation, allowed us to create a model that predicts the winner of an end given it's current state with 83% accuracy, giving us insight into how factors such as hammer possession and geometric "steal" probabilities affect the odds of a given team winning a game.
+
+As you can see below, the predictive power of this model gets better for later shots, which makes sense as earlier game states have more volatility.
+
+```{r, out.width="60%"}
+print(accuracy_plot)
+```
+
+This model performs better than an educated guess, which in this case would be guessing the team that throws last (has the hammer). This is a good guess as the team with the hammer wins the game 70% of the time.
+
+Based on this model, some of the most important predictive variables are:
+
+1.  Steal Probability - A variable that we created, which looks at the geometric state of the game and tries to predict whether the currently leading team with lose their lead in the last shot.
+
+2.  Closest Advantage - The raw difference between the second teams closest stone and team 1's closest stone. A greater number means that team 1 has a closer stone to the house.
+
+3.  Hammer - The team that shoots last often has a higher chance of winning.
+
+We can see more of these predictors below:
+
+```{r}
+print(importance_plot)
+```

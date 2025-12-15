@@ -145,7 +145,7 @@ Using the plot below, we can see that the model, intuitively, performs better fo
 print(accuracy_plot)
 ```
 
-There is a strange dip at shot 9 relative to shot 8 which we don't have a good explanation for. Beyond that, the model follows a rise from around ~70% accuracy in the earlier shots (a trend that would continue to stay true for shots 1 to 4) to around a stable 83% accuracy. 
+We can see that the model follows a rise from around ~70% accuracy in the earlier shots (a trend that would continue to stay true for shots 1 to 4) to around a stable 83% accuracy at the later shots that are not the final one. 
 
 We can make a plot to see how much each predictor contributes to our model's success:
 

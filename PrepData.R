@@ -203,17 +203,19 @@ model_data <- model_data %>%
     StonesHiddenAdv = Team1_Stones_Behind_Guards - Team2_Stones_Behind_Guards,
     ScoreDiff = ScoreDiffBeforeEnd,
     EndsRemaining = max(EndID) - EndID + 1,
-    
-    # This is useful for the steal probability we added later
+    Team1_Currently_Winning = ifelse(Current_Score_Team1 > 0, 1, 0),
     Steal_Happened = ifelse((Hammer == 1 & Result_Team1 < 0) | 
                               (Hammer == 0 & Result_Team1 > 0), 1, 0),
-    
-    # Interactions!
+
     Hammer_x_StoneAdv = Hammer * StoneAdv,
     ScoreDiff_x_Hammer = ScoreDiff * Hammer,
-    ScoreDiff_x_EndsRemaining = ScoreDiff / (EndsRemaining + 1)
+    ScoreDiff_x_EndsRemaining = ScoreDiff / (EndsRemaining + 1),
+    
+    # New interaction: ShotID x Currently Winning. 
+    # Added after the call to try and get 100% on the final Shot
+    # (This still doesn't work for some reason?)
+    ShotID_x_Winning = ShotID * Team1_Currently_Winning
   ) %>%
-  # Handle data issues here
   mutate(across(where(is.numeric), ~ ifelse(is.infinite(.), 0, .))) %>%
   mutate(across(where(is.numeric), ~ ifelse(is.nan(.), 0, .)))
 
