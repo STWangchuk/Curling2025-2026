@@ -101,3 +101,55 @@ importance_plot <- ggplot(top_10_importance, aes(x = Gain, y = Feature, fill = G
     axis.title = element_text(size = 12),
     legend.position = "none"
   )
+
+voronoi_plot <- ggplot() +
+  geom_polygon(
+    data = poly_df,
+    aes(x = x, y = y, group = poly_id, fill = factor(team)),
+    alpha = 0.3,
+    color = NA
+  ) +
+  geom_point(
+    data = voronoi_data,
+    aes(x = x, y = y, color = factor(team)),
+    size = 2
+  ) +
+  annotate(
+    "path",
+    x = 750 + 200 * cos(seq(0, 2*pi, length.out = 300)),
+    y = 800 + 200 * sin(seq(0, 2*pi, length.out = 300)),
+    linewidth = 1
+  ) +
+  annotate(
+    "path",
+    x = 750 + 400 * cos(seq(0, 2*pi, length.out = 300)),
+    y = 800 + 400 * sin(seq(0, 2*pi, length.out = 300)),
+    linewidth = 1
+  ) +
+  annotate(
+    "path",
+    x = 750 + 600 * cos(seq(0, 2*pi, length.out = 300)),
+    y = 800 + 600 * sin(seq(0, 2*pi, length.out = 300)),
+    linewidth = 1
+  ) +
+  geom_point(
+    aes(x = 750, y = 800),
+    shape = 4,
+    color = "darkgreen",
+    size = 4,
+    stroke = 1.2
+  ) +
+  scale_fill_manual(values = team_colors) +
+  scale_color_manual(values = team_colors) +
+  coord_fixed(xlim = c(0, 1500), ylim = c(0, 3000)) +
+  labs(
+    title = "Voronoi Diagram of Stones",
+    x = "X",
+    y = "Y",
+    fill = "Team",
+    color = "Team"
+  ) +
+  theme_minimal()
+
+
+
