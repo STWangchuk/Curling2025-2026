@@ -145,7 +145,7 @@ Using the plot below, we can see that the model, intuitively, performs better fo
 print(accuracy_plot)
 ```
 
-We can see that the model follows a rise from around ~70% accuracy in the earlier shots (a trend that would continue to stay true for shots 1 to 4) to around a stable 83% accuracy at the later shots that are not the final one. 
+We can see that the model follows a rise from around \~70% accuracy in the earlier shots (a trend that would continue to stay true for shots 1 to 4) to around a stable 83% accuracy at the later shots that are not the final one.
 
 We can make a plot to see how much each predictor contributes to our model's success:
 
@@ -155,17 +155,17 @@ print(importance_plot)
 
 Some of these important variables include:
 
-1. Steal Probability - Our constructed variable is one of our model's best predictors, likely as it provides a lot of information about the staying power of a current lead.
+1.  Steal Probability - Our constructed variable is one of our model's best predictors, likely as it provides a lot of information about the staying power of a current lead.
 
-2. Closest Advantage - The raw difference between the second teams closest stone and team 1's closest stone. A greater number means that team 1 has a closer stone to the house. 
+2.  Closest Advantage - The raw difference between the second teams closest stone and team 1's closest stone. A greater number means that team 1 has a closer stone to the house.
 
-3. Hammer - Self explanatory. We have already seen above how important this is. 
+3.  Hammer - Self explanatory. We have already seen above how important this is.
 
-4. Steal pressure - This refers to the interaction between steal probability and how far along the game we are. 
+4.  Steal pressure - This refers to the interaction between steal probability and how far along the game we are.
 
-The other values capture subtle geometric information that adds up to help improve the model's predictive power. 
+The other values capture subtle geometric information that adds up to help improve the model's predictive power.
 
-[THIS IS A GREAT TIME TO MENTION THE CNN AND TALK ABOUT HOW IT DIDN'T WORK]
+\[THIS IS A GREAT TIME TO MENTION THE CNN AND TALK ABOUT HOW IT DIDN'T WORK\]
 
 ## Conclusions and recommendations
 
@@ -179,7 +179,7 @@ One or two paragraphs stating conclusions, recommendations, and ideas for future
 
 ## Appendix A - Specifications of the XGBoost Model
 
-The following code snippet doesn't run, but contains all of the information necessary to understand the full XGBoost model used in the report. 
+The following code snippet doesn't run, but contains all of the information necessary to understand the full XGBoost model used in the report.
 
 ```{r, echo = TRUE, eval = FALSE}
 
@@ -248,4 +248,3 @@ if (file.exists(main_model_path) && file.exists(cv_preds_path)) {
   saveRDS(importance_matrix, importance_path)
 }
 ```
-
