@@ -30,7 +30,7 @@ Advised By: Professor Brian Macdonald
 
 ## Abstract
 
-Mixed Doubles Curling is an offshoot of traditional curling, a sport where two teams take turns sliding stones down a sheet of ice towards a target. It has been called the "Wild West of Curling" due to its distinctive format and strategic complexity. Our goal is to take a given game state (looking at information available to players and coaches such as how many stones have been thrown and the positions of such stones) to generate a model that predicts the win percentage for each team. This model will be created using data from the Beijing 2022 Olympic Winter Games, and the World Mixed Doubles Curling Championship from 2023-2025. Using an XGBoost (Extreme Gradient Boosting) model with targeted feature generation, we managed to create a model that predicts the winner of an end given it's current state with 83% accuracy, giving us insight into how factors such as hammer possession and geometric "steal" probabilities affect the odds of a given team winning a game.
+Mixed Doubles Curling is an offshoot of traditional curling, a sport where two teams take turns sliding stones down a sheet of ice towards a target. It has been called the "Wild West of Curling" due to its distinctive format and strategic complexity. Our goal is to take a given game state (looking at information available to players and coaches such as how many stones have been thrown and the positions of such stones) to generate a model that predicts the win percentage for each team. This model will be created using data from the Beijing 2022 Olympic Winter Games, and the World Mixed Doubles Curling Championship from 2023-2025. Using an XGBoost (Extreme Gradient Boosting) model with targeted feature generation, we managed to create a model that predicts the winner of an end given it's current state with 83% accuracy, giving us insight into how factors such as hammer possession and geometric "steal" probabilities affect the odds of a given team winning a game. Additionally, using a Convolutional Neural Network with just spatial and hammer data, we created a (sub-par) model that predicts the winner with 66% accuracy, highlighting the importance of human-given context in curling win prediction.
 
 <br>
 
@@ -58,7 +58,7 @@ Our data set features 6 different csv files:
 
 Our analysis will mostly be focusing on the stones data set, with others mostly used to provide important context for that analysis.
 
-This report begins by exploring the data and visualizing how things such as hammer possession and power play affect win probability on an end to end basis, and the raw probability of something like a last shot steal. The next section then discusses other models that we tried before settling into the XGBoost model, and then explains how we tuned that model to be successful. In the final two sections, we discuss conclusions that we can draw from the model, and directions for future studies into mixed doubles curling.
+This report begins by exploring the data and visualizing how things such as hammer possession and power play affect win probability on an end to end basis, and the raw probability of something like a last shot steal. The next section then discusses other models that we tried before settling into the XGBoost model, and then explains how we tuned that model to be successful. It also discusses the ongoing work on creating a convolutional neural network. In the final two sections, we discuss conclusions that we can draw from the models, and directions for future studies into mixed doubles curling.
 
 <br>
 
@@ -106,7 +106,11 @@ print(steal_heatmap)
 
 This heat map clearly shows us that roughly 30% of all final shots are steals. If we assume that both teams have an equal chance of winning, this means that the team with the hammer should win 50% + (30% of 50%) = 50% + 15% = 65% of the time. This means that much of the hammer's benefit is being able to steal the final shot, but there is also a bit more of a benefit it gives beyond just that alone.
 
-\[INSERT IMPORTANT GEOGRAPHICAL VISUALIZATIONS HERE\]
+We can visualize the state of the curling sheet right before a steal with a Voronoi diagram. In the following diagram, we can see the regions of the curling sheet that are closest to a stone from each team respectively. The center of the curling sheet is marked with a green X. Essentially, the winner of the end is the team that, after the next throw, "controls the center". In the instance below, if blue were to throw a stone such that the center of the sheet was within the blue region instead, then it would have "stolen" the win, as described above. This is why, despite the clear "winner" if we just take into account shot 9 being team 1 in this instance, it is so important that we model the probability of a steal in our model.
+
+```{r}
+print(voronoi_plot)
+```
 
 All of these visualizations help guide the features that we add to the final model!
 
@@ -135,6 +139,18 @@ This initial model had an accuracy of about 76%, a measly 6% improvement from th
 In order to improve this model, we trained a sub-model with a similar set of geometric features with the goal of predicting whether a steal was possible at the given game state. This model was trained and tested in the same way as the larger model above, and gave us a "Steal probability" variable to feed into the large model. This variable had a mean of around 29%, which aligns with the empirical expectation that we have seen before. Adding this into our overall model gives us significantly better accuracy of around 83%. This is still not a perfect model, but this is reasonable predictive power for such a volatile game, and shows that the contextual and spatial features do matter.
 
 The exact variables and parameters used in the final model can be seen in the "Analysis.R" file and in appendix A.
+
+Separately, we attempted to train a convolutional neural network for this dataset. As our previous XGBoost model incorporated many engineered predictors that gave the model context about the current game state, we attempted to create a model that would learn this context instead from the spatial data (x and y coordinates of stones only). While the data is not directly interpretable or visualizable due to the nature of the CNN, by running the file "CurlingCNN.ipynb" in google colab with the data, the reader can re-train the model to see the exact model architecture and the pattern of the train/val loss in training.
+
+The spatial data for each game state was encoded using tensors of two channels (one channel for team 1 stones, and the other for team 2 stones). The dimensions of the tensor were then significantly reduced from the dimensions of the curling sheet (1500x3000 to 150x300) by max pooling. A visualization of the encoding of a single game state can be seen below:
+
+![](CNN_encoding.png)
+
+The model was also given the information of which team has the hammer. Other than that, no additional information was fed to the model (which includes 20,000 game states, 10,000 of which are mirrored).
+
+The data was split into 19,900 training game states and 100 testing game states. From here, 5 fold cross validation was used with binary cross entropy loss to train the CNN. Various levels of regularization were attempted to prevent overfitting to the training data.
+
+After tuning of the model architecture and many alterations of the data encoding, the accuracy on unseen data appears to be only 66%. This was disappointing, as this accuracy is lower than our baseline of 70% (described above). Some potential explanations for this are detailed below.
 
 <br>
 
@@ -166,11 +182,17 @@ Some of these important variables include:
 
 The other values capture subtle geometric information that adds up to help improve the model's predictive power.
 
-\[THIS IS A GREAT TIME TO MENTION THE CNN AND TALK ABOUT HOW IT DIDN'T WORK\]
+As for the interpretation of the convolutional neural network results, the low prediction acccuracy is likely a factor of the training dataset itself, which included game states after shot 5. The lack of "generalizability" of features of the curling sheet BETWEEN game states and their relevance in predicting end outcome is likely the culprit here. Additionally, for a CNN of this style and for data this sparse, it appears that 20,000 data points may not be sufficient.
 
 ## Conclusions and recommendations
 
-One or two paragraphs stating conclusions, recommendations, and ideas for future work and improvements.
+In summary, our random forest model was able to predict the final winner of each end of a curling match with a total accuracy of around 83% for the last 7 game states. In comparison to the known baseline accuracy for win prediction of 70% (just based on team with the hammer), our model is slightly better at predicting the winner of an end using our additional constructed variables.
+
+Our convolutional neural network has proven to be less accurate. With only spatial data and no constructed variables, it seems that there is not enough data for the model to learn how to classify the winner of the end. The accuracy is not much better than random guessing (a bit over 50%), and it is much lower than our baseline of 70%.
+
+This points to some future directions in developing a more accurate model for classifying the winner of each end. Perhaps changing the way the data is encoded would improve model accuracy (including previous game states, changing the model architecture, including more data, etc.). It is likely that the model is limited by issues with CNN structure. We would like to explore in the future how "stacking" game states would potentially allow the model to see progression between states rather than static game states, as this may affect the winner prediction (based on superior strategy, for example). Additionally, we would like to see if training on just the final game state(s) all together (stacked) could be used to accurately predict whether a "steal" occurred in the final shot. This could be more accurate, and more descriptive in terms of an interpretable and useful model in determining a team's defense efficacy.
+
+Another future direction for this analysis would be to look into specific moves that changed the expected winner of the end. Perhaps looking at the influence of power plays on win probability as well as whether certain types of plays move the needle more than others. Finally, looking more into the strategy of individual teams could be an additional interesting direction, and looking at whether teams that use certain strategies perform better against certain teams could provide some interesting information as well.
 
 ## Data Sources & References
 

@@ -300,4 +300,5 @@ voronoi_plot <- ggplot() +
   ) +
   theme_minimal()
 
+saveRDS(Stones, "Stones.rds")
 saveRDS(model_data, "Data.rds")
