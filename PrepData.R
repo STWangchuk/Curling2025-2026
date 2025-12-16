@@ -1,6 +1,8 @@
 
 library(dplyr)
 library(data.table)
+library(deldir)
+library(ggplot2)
 
 Competition <- read.csv("data/Competition.csv")
 Competitors <- read.csv("data/Competitors.csv")

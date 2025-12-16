@@ -1,5 +1,5 @@
 # Effectively an extension of the Analysis script with the visualizations
-
+library(ggplot2)
 model_data <- readRDS("Data.rds")
 Stones <- readRDS("Stones.rds")
 

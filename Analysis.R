@@ -1,10 +1,22 @@
 rm(list = ls())
 library(dplyr)
-library(xgboost)
+
 library(caret)
 library(ggplot2)
 library(tidyr)
 set.seed(123)
+pkg <- "xgboost"
+target_version <- "1.7.6.1"
+
+if (!requireNamespace(pkg, quietly = TRUE) ||
+    packageVersion(pkg) != target_version) {
+  remotes::install_version(
+    pkg,
+    version = target_version,
+    repos = "https://cran.r-project.org"
+  )
+}
+library(xgboost)
 
 # Honestly this is just to prevent me from having to wait 5 minutes every single time I try rendering this
 if (!dir.exists("models")) {

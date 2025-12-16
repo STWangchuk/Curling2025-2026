@@ -186,7 +186,7 @@ As for the interpretation of the convolutional neural network results, the low p
 
 ## Conclusions and recommendations
 
-In summary, our random forest model was able to predict the final winner of each end of a curling match with a total accuracy of around 83% for the last 7 game states. In comparison to the known baseline accuracy for win prediction of 70% (just based on team with the hammer), our model is slightly better at predicting the winner of an end using our additional constructed variables.
+In summary, our XGBoost model was able to predict the final winner of each end of a curling match with a total accuracy of around 83% for the last 7 game states. In comparison to the known baseline accuracy for win prediction of 70% (just based on team with the hammer), our model is slightly better at predicting the winner of an end using our additional constructed variables.
 
 Our convolutional neural network has proven to be less accurate. With only spatial data and no constructed variables, it seems that there is not enough data for the model to learn how to classify the winner of the end. The accuracy is not much better than random guessing (a bit over 50%), and it is much lower than our baseline of 70%.
 
