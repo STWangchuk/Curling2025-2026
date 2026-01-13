@@ -1,6 +1,5 @@
 ---
 title: "Curling Win Probabilities"
-author: "Jake Todd and Sonam Wangchuk"
 date: today
 format: pdf
 editor: visual
@@ -21,11 +20,6 @@ knitr::opts_chunk$set(echo   =FALSE,
                       )
 ```
 
-```{=tex}
-\begin{center}
-Advised By: Professor Brian Macdonald
-\end{center}
-```
 <br>
 
 ## Abstract
